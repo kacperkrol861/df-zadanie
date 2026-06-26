@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useMockApi, type ScanItem, type ScanLog, type ScanResultItem } from '@/composables/useMockApi'
+import { useScanRunner } from '@/composables/useScanRunner'
+
 
 export const useScansStore = defineStore('scans', () => {
   const api = useMockApi()
@@ -8,7 +10,7 @@ export const useScansStore = defineStore('scans', () => {
   const scans = ref<ScanItem[]>([])
   const selectedScan = ref<ScanItem | null>(null)
 
-
+  const runner = useScanRunner()
   const logs = ref<ScanLog[]>([])
   const results = ref<ScanResultItem[]>([])
 
@@ -79,18 +81,36 @@ export const useScansStore = defineStore('scans', () => {
   }
 
   
+const updateScanInList = (scan: ScanItem) => {
+  const index = scans.value.findIndex(s => s.id === scan.id)
 
-  
-  const runScan = async (onProgress?: (v: number) => void) => {
-    return api.runScan((v) => {
-      selectedScan.value = selectedScan.value
-        ? { ...selectedScan.value, progress: v, status: 'running' }
-        : null
-
-      onProgress?.(v)
-    })
+  if (index !== -1) {
+    scans.value[index] = scan
   }
+}
 
+const runScan = async () => {
+  if (!selectedScan.value) return
+
+  await runner.run({
+    scan: selectedScan.value,
+
+    onProgress: (updated) => {
+      selectedScan.value = updated
+      updateScanInList(updated)
+    },
+
+    onLog: (log) => {
+      logs.value.unshift(log)
+    },
+
+    onFinish: (scan, resultsData) => {
+      selectedScan.value = scan
+      updateScanInList(scan)
+      results.value = resultsData
+    },
+  })
+}
   
   const resetSelected = () => {
     selectedScan.value = null
