@@ -1,89 +1,122 @@
 <template>
-  <va-card class="step">
+  <div class="wrap">
 
-    <h2 class="title">Running scan</h2>
+    <va-card class="card">
 
-    <p class="subtitle">
-      We are analyzing your data source based on selected scope.
-    </p>
+      <div class="stepper">
 
-    <div v-if="store.scanStatus === 'idle'" class="start">
-      <va-button color="primary" size="large" @click="store.startScan()">
-        Start scan
-      </va-button>
-    </div>
-
-    <div v-else class="progress-wrap">
-
-      <div class="progress-header">
-        <span>{{ statusText }}</span>
-        <span class="percent">{{ store.progress }}%</span>
-      </div>
-
-      <va-progress-bar
-        :model-value="store.progress"
-        size="large"
-      />
-
-      <div v-if="store.progress > 30" class="preview">
-
-        <div class="preview-title">
-          Live insights
-        </div>
-
-        <div class="cards">
-
-          <va-card class="mini">
-            <div class="label">Top category</div>
-            <div class="value">Finance</div>
-          </va-card>
-
-          <va-card class="mini">
-            <div class="label">Anomalies</div>
-            <div class="value">1,243</div>
-          </va-card>
-
-          <va-card class="mini">
-            <div class="label">Data quality</div>
-            <div class="value">89%</div>
-          </va-card>
-
-        </div>
-
-      </div>
-
-      <div v-if="store.scanStatus === 'done'" class="done">
-
-        <va-card class="done-card">
-          <div class="done-title">Scan completed</div>
-          <div class="done-subtitle">
-            Your data is ready to explore in the dashboard.
-          </div>
-        </va-card>
-
-        <va-button
-          color="success"
-          size="large"
-          @click="$router.push('/dashboard')"
+        <div
+          v-for="(s, i) in store.steps"
+          :key="s"
+          class="step"
+          :class="{
+            active: store.step === i,
+            done: store.step > i
+          }"
         >
-          Go to dashboard
-        </va-button>
+          <div class="dot">
+            <Icon v-if="store.step > i" icon="mdi:check" />
+            <span v-else>{{ i + 1 }}</span>
+          </div>
+
+          <div class="label">
+            {{ formatStep(s) }}
+          </div>
+
+        </div>
 
       </div>
 
-    </div>
+      <div class="content">
 
-  </va-card>
+        <h2 class="title">Running scan</h2>
+
+        <p class="subtitle">
+          We are analyzing your data source based on selected scope.
+        </p>
+
+        <div v-if="store.scan.status === 'idle'" class="start">
+          <va-button color="primary" size="large" @click="store.startScan()">
+            Start scan
+          </va-button>
+        </div>
+
+        <div v-else class="progress-wrap">
+
+          <div class="progress-header">
+            <span>{{ statusText }}</span>
+            <span class="percent">{{ store.scan.progress }}%</span>
+          </div>
+
+          <va-progress-bar
+            :model-value="store.scan.progress"
+            size="large"
+          />
+
+          <div v-if="store.scan.progress > 30" class="preview">
+
+            <div class="preview-title">
+              Live insights
+            </div>
+
+            <div class="cards">
+
+              <va-card class="mini">
+                <div class="label">Top category</div>
+                <div class="value">Finance</div>
+              </va-card>
+
+              <va-card class="mini">
+                <div class="label">Anomalies</div>
+                <div class="value">1,243</div>
+              </va-card>
+
+              <va-card class="mini">
+                <div class="label">Data quality</div>
+                <div class="value">89%</div>
+              </va-card>
+
+            </div>
+
+          </div>
+
+          <div v-if="store.scan.status === 'done'" class="done">
+
+            <va-card class="done-card">
+              <div class="done-title">Scan completed</div>
+              <div class="done-subtitle">
+                Your data is ready to explore in the dashboard.
+              </div>
+            </va-card>
+
+            <va-button
+              color="success"
+              size="large"
+              @click="$router.push('/dashboard')"
+            >
+              Go to dashboard
+            </va-button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </va-card>
+
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useOnboardingStore } from '@/stores/onboarding.store'
+import { Icon } from '@iconify/vue'
 
 const store = useOnboardingStore()
 
 const statusText = computed(() => {
-  switch (store.scanStatus) {
+  switch (store.scan.status) {
     case 'idle':
       return 'Ready to start'
     case 'running':
@@ -94,13 +127,90 @@ const statusText = computed(() => {
       return ''
   }
 })
+
+const formatStep = (s: string) => {
+  switch (s) {
+    case 'welcome': return 'Welcome'
+    case 'source': return 'Source'
+    case 'scope': return 'Scope'
+    case 'scan': return 'Scan'
+    case 'results': return 'Results'
+    default: return s
+  }
+}
 </script>
 
 <style scoped>
-.step {
-  padding: 32px;
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--va-background-secondary);
-  border-radius: 16px;
+  padding: var(--va-gap-large);
+}
+
+.card {
+  width: 100%;
+  max-width: 820px;
+  padding: var(--va-gap-large);
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
+}
+
+/* SAME STEPPER AS WELCOME */
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--va-gap-small);
+  padding-bottom: var(--va-gap-medium);
+  border-bottom: 1px solid var(--va-background-border);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--va-gap-small);
+  opacity: 0.5;
+}
+
+.step.active,
+.step.done {
+  opacity: 1;
+}
+
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--va-background-border);
+  font-size: 12px;
+}
+
+.step.active .dot {
+  background: var(--va-primary);
+  color: white;
+}
+
+.step.done .dot {
+  background: var(--va-success);
+  color: white;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--va-text-primary);
+}
+
+/* CONTENT */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
 }
 
 .title {
@@ -110,17 +220,18 @@ const statusText = computed(() => {
 }
 
 .subtitle {
-  margin-top: 6px;
-  margin-bottom: 24px;
+  font-size: 14px;
   color: var(--va-text-secondary);
 }
 
+/* START */
 .start {
   display: flex;
   justify-content: center;
   padding: 40px 0;
 }
 
+/* PROGRESS */
 .progress-wrap {
   display: flex;
   flex-direction: column;
@@ -139,14 +250,10 @@ const statusText = computed(() => {
   color: var(--va-text-primary);
 }
 
-.preview {
-  margin-top: 16px;
-}
-
+/* PREVIEW */
 .preview-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--va-text-primary);
   margin-bottom: 12px;
 }
 
@@ -172,11 +279,10 @@ const statusText = computed(() => {
   font-size: 16px;
   font-weight: 600;
   margin-top: 6px;
-  color: var(--va-text-primary);
 }
 
+/* DONE */
 .done {
-  margin-top: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -192,7 +298,6 @@ const statusText = computed(() => {
 .done-title {
   font-size: 18px;
   font-weight: 600;
-  color: var(--va-text-primary);
 }
 
 .done-subtitle {

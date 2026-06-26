@@ -1,111 +1,127 @@
 <template>
-  <va-card class="step">
+  <div class="wrap">
 
-    <h2 class="title">Scan scope</h2>
-
-    <p class="subtitle">
-      Define what data should be included in the scan.
-    </p>
-
-    <div class="layout">
+    <va-card class="card">
 
       
-      <div class="options">
+      <div class="stepper">
 
         <div
-          v-for="o in options"
-          :key="o.value"
-          class="option-card"
-          :class="{ active: store.scope === o.value }"
-          @click="select(o.value)"
+          v-for="(s, i) in store.steps"
+          :key="s"
+          class="step"
+          :class="{
+            active: store.step === i,
+            done: store.step > i
+          }"
         >
-
-          <div class="radio">
-            <Icon
-              :icon="store.scope === o.value
-                ? 'mdi:radiobox-marked'
-                : 'mdi:radiobox-blank'"
-            />
+          <div class="dot">
+            <Icon v-if="store.step > i" icon="mdi:check" />
+            <span v-else>{{ i + 1 }}</span>
           </div>
 
-          <div class="content">
-            <div class="label">{{ o.label }}</div>
-            <div class="desc">{{ o.desc }}</div>
+          <div class="label">
+            {{ formatStep(s) }}
           </div>
-
-        </div>
-
-        
-        <div v-if="store.scope === 'custom'" class="date-box">
-
-          <div class="date-title">Custom range</div>
-
-          <div class="dates">
-
-            <va-input
-              v-model="from"
-              type="date"
-              label="From"
-            />
-
-            <va-input
-              v-model="to"
-              type="date"
-              label="To"
-            />
-
-          </div>
-
-          <va-button
-            size="small"
-            :disabled="!from || !to"
-            @click="applyDates"
-          >
-            Apply range
-          </va-button>
 
         </div>
 
       </div>
 
-      
-      <va-card class="summary">
+      <h2 class="title">Scan scope</h2>
 
-        <div class="summary-title">
-          Current selection
+      <p class="subtitle">
+        Define what data should be included in the scan.
+      </p>
+
+      <div class="layout">
+
+        <div class="options">
+
+          <div
+            v-for="o in options"
+            :key="o.value"
+            class="option-card"
+            :class="{ active: store.scope === o.value }"
+            @click="select(o.value)"
+          >
+
+            <div class="radio">
+              <Icon
+                :icon="store.scope === o.value
+                  ? 'mdi:radiobox-marked'
+                  : 'mdi:radiobox-blank'"
+              />
+            </div>
+
+            <div class="content">
+              <div class="label">{{ o.label }}</div>
+              <div class="desc">{{ o.desc }}</div>
+            </div>
+
+          </div>
+
+          <div v-if="store.scope === 'custom'" class="date-box">
+
+            <div class="date-title">Custom range</div>
+
+            <div class="dates">
+
+              <va-input v-model="from" type="date" label="From" />
+              <va-input v-model="to" type="date" label="To" />
+
+            </div>
+
+            <va-button
+              size="small"
+              :disabled="!from || !to"
+              @click="applyDates"
+            >
+              Apply range
+            </va-button>
+
+          </div>
+
         </div>
 
-        <div class="summary-value">
-          {{ currentLabel }}
-        </div>
+        <va-card class="summary">
 
-        <div class="hint">
-          This defines how deep the scan will go.
-        </div>
+          <div class="summary-title">
+            Current selection
+          </div>
 
-        <div v-if="store.scope === 'custom' && store.customRange.from" class="range">
-          <div>From: {{ store.customRange.from }}</div>
-          <div>To: {{ store.customRange.to }}</div>
-        </div>
+          <div class="summary-value">
+            {{ currentLabel }}
+          </div>
 
-      </va-card>
+          <div class="hint">
+            This defines how deep the scan will go.
+          </div>
 
-    </div>
+          <div v-if="store.scope === 'custom' && store.customRange.from" class="range">
+            <div>From: {{ store.customRange.from }}</div>
+            <div>To: {{ store.customRange.to }}</div>
+          </div>
 
-    
-    <div class="actions">
+        </va-card>
 
-      <va-button
-        color="primary"
-        :disabled="!store.scope"
-        @click="store.next()"
-      >
-        Continue
-      </va-button>
+      </div>
 
-    </div>
+      <div class="actions">
 
-  </va-card>
+        <va-button
+          color="primary"
+          :disabled="!store.scope"
+          @click="store.next()"
+        >
+          Continue
+        </va-button>
+
+      </div>
+
+    </va-card>
+
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -143,7 +159,7 @@ const options: {
 ]
 
 const select = (value: ScopeType) => {
-  store.scope = value
+  store.setScope(value)
 }
 
 const applyDates = () => {
@@ -153,11 +169,82 @@ const applyDates = () => {
 const currentLabel = computed(() => {
   return options.find(o => o.value === store.scope)?.label || 'Not selected'
 })
+
+const formatStep = (s: string) => {
+  switch (s) {
+    case 'welcome': return 'Welcome'
+    case 'source': return 'Source'
+    case 'scope': return 'Scope'
+    case 'scan': return 'Scan'
+    case 'results': return 'Results'
+    default: return s
+  }
+}
 </script>
 
 <style scoped>
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--va-background-secondary);
+  padding: var(--va-gap-large);
+}
+
+.card {
+  width: 100%;
+  max-width: 900px;
+  padding: var(--va-gap-large);
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
+}
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--va-gap-small);
+  padding-bottom: var(--va-gap-medium);
+  border-bottom: 1px solid var(--va-background-border);
+}
+
 .step {
-  padding: 32px;
+  display: flex;
+  align-items: center;
+  gap: var(--va-gap-small);
+  opacity: 0.5;
+}
+
+.step.active,
+.step.done {
+  opacity: 1;
+}
+
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--va-background-border);
+  font-size: 12px;
+}
+
+.step.active .dot {
+  background: var(--va-primary);
+  color: white;
+}
+
+.step.done .dot {
+  background: var(--va-success);
+  color: white;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--va-text-primary);
 }
 
 .title {
@@ -166,11 +253,9 @@ const currentLabel = computed(() => {
 }
 
 .subtitle {
-  margin-top: 6px;
-  margin-bottom: 24px;
+  font-size: 14px;
   color: var(--va-text-secondary);
 }
-
 
 .layout {
   display: grid;
@@ -178,25 +263,20 @@ const currentLabel = computed(() => {
   gap: 24px;
 }
 
-
 .options {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* OPTION CARD */
 .option-card {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-
   padding: 16px;
   border-radius: 14px;
-
   border: 1px solid var(--va-background-border);
   background: var(--va-background-element);
-
   cursor: pointer;
   transition: 0.2s ease;
 }
@@ -211,25 +291,25 @@ const currentLabel = computed(() => {
   box-shadow: 0 0 0 2px rgba(0, 120, 255, 0.12);
 }
 
-
 .radio {
   font-size: 20px;
   color: var(--va-primary);
 }
 
+.content {
+  flex: 1;
+}
 
 .label {
-  font-size: 15px;
   font-weight: 600;
+  font-size: 14px;
 }
 
 .desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--va-text-secondary);
   margin-top: 4px;
-  line-height: 1.4;
 }
-
 
 .date-box {
   margin-top: 16px;
@@ -249,7 +329,6 @@ const currentLabel = computed(() => {
   font-weight: 600;
   margin-bottom: 10px;
 }
-
 
 .summary {
   padding: 16px;
@@ -283,9 +362,7 @@ const currentLabel = computed(() => {
   color: var(--va-text-primary);
 }
 
-
 .actions {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
 }

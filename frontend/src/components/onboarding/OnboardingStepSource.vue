@@ -1,82 +1,110 @@
 <template>
-  <va-card class="step">
+  <div class="wrap">
 
-    <h2 class="title">Connect source</h2>
+    <va-card class="card">
 
-    <p class="subtitle">
-      Choose where your data comes from.
-    </p>
+      <div class="stepper">
 
-    <div class="stack">
-
-      <div
-        v-for="s in sources"
-        :key="s.type"
-        class="source-card"
-        :class="{
-          active: store.sourceType === s.type,
-          disabled: isBusy
-        }"
-        @click="select(s.type)"
-      >
-
-        <Icon :icon="s.icon" class="icon" />
-
-        <div class="content">
-          <div class="label">{{ s.label }}</div>
-          <div class="desc">
-            {{ getDesc(s.type) }}
+        <div
+          v-for="(s, i) in store.steps"
+          :key="s"
+          class="step"
+          :class="{
+            active: store.step === i,
+            done: store.step > i
+          }"
+        >
+          <div class="dot">
+            <Icon v-if="store.step > i" icon="mdi:check" />
+            <span v-else>{{ i + 1 }}</span>
           </div>
-        </div>
 
-        <div class="checkbox">
-          <Icon
-            v-if="store.sourceType === s.type"
-            icon="mdi:check-circle"
-            class="check"
-          />
-          <Icon
-            v-else
-            icon="mdi:checkbox-blank-circle-outline"
-            class="empty"
-          />
+          <div class="label">
+            {{ formatStep(s) }}
+          </div>
+
         </div>
 
       </div>
 
-    </div>
+      
+      <div class="content">
 
-    <va-chip class="chip" :color="color">
+        <h2 class="title">Connect source</h2>
 
-      <Icon :icon="statusIcon" class="chip-icon" />
+        <p class="subtitle">
+          Choose where your data comes from and connect it to continue setup.
+        </p>
 
-      <span class="chip-text">
-        {{ statusText }}
-      </span>
+        
+        <div class="stack">
 
-    </va-chip>
+          <div
+            v-for="s in sources"
+            :key="s.type"
+            class="source-card"
+            :class="{
+              active: store.sourceType === s.type,
+              disabled: isBusy
+            }"
+            @click="select(s.type)"
+          >
 
-    <div class="actions">
+            <Icon :icon="s.icon" class="icon" />
 
-      <va-button
-        v-if="store.sourceStatus === 'idle' || store.sourceStatus === 'error'"
-        :disabled="!store.sourceType || isBusy"
-        @click="store.connectSource()"
-      >
-        {{ store.sourceStatus === 'error' ? 'Retry' : 'Connect' }}
-      </va-button>
+            <div class="text">
+              <div class="label">{{ s.label }}</div>
+              <div class="desc">{{ getDesc(s.type) }}</div>
+            </div>
 
-      <va-button
-        v-if="store.sourceStatus === 'connected'"
-        color="success"
-        @click="store.next()"
-      >
-        Continue
-      </va-button>
+            <Icon
+              v-if="store.sourceType === s.type"
+              icon="mdi:check-circle"
+              class="check"
+            />
 
-    </div>
+          </div>
 
-  </va-card>
+        </div>
+
+        
+        <va-chip class="chip" :color="color">
+
+          <Icon :icon="statusIcon" class="chip-icon" />
+
+          <span class="chip-text">
+            {{ statusText }}
+          </span>
+
+        </va-chip>
+
+        
+        <div class="actions">
+
+          <va-button
+            v-if="store.sourceStatus === 'idle' || store.sourceStatus === 'error'"
+            :disabled="!store.sourceType || isBusy"
+            @click="store.connectSource()"
+          >
+            {{ store.sourceStatus === 'error' ? 'Retry connection' : 'Connect' }}
+          </va-button>
+
+          <va-button
+            v-if="store.sourceStatus === 'connected'"
+            color="success"
+            @click="store.next()"
+            :disabled="!store.canGoNext"
+          >
+            Continue
+          </va-button>
+
+        </div>
+
+      </div>
+
+    </va-card>
+
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -94,14 +122,12 @@ const sources: { type: SourceType; label: string; icon: string }[] = [
   { type: 'api', label: 'API', icon: 'mdi:api' },
 ]
 
+const isBusy = computed(() => store.sourceStatus === 'connecting')
+
 const select = (type: SourceType) => {
   if (isBusy.value) return
   store.selectSource(type)
 }
-
-const isBusy = computed(() =>
-  ['connecting', 'saving'].includes(store.sourceStatus)
-)
 
 const getDesc = (type: SourceType) => {
   if (type === 'cloud') return 'Google Drive, S3, Dropbox'
@@ -112,13 +138,11 @@ const getDesc = (type: SourceType) => {
 const statusText = computed(() => {
   switch (store.sourceStatus) {
     case 'idle':
-      return 'Select source'
+      return 'Select a data source'
     case 'connecting':
-      return 'Connecting...'
-    case 'saving':
-      return 'Saving configuration...'
+      return 'Connecting to source...'
     case 'connected':
-      return 'Connected'
+      return 'Source connected'
     case 'error':
       return 'Connection failed'
   }
@@ -128,8 +152,6 @@ const statusIcon = computed(() => {
   switch (store.sourceStatus) {
     case 'connecting':
       return 'mdi:loading'
-    case 'saving':
-      return 'mdi:content-save'
     case 'connected':
       return 'mdi:check-circle'
     case 'error':
@@ -142,15 +164,93 @@ const statusIcon = computed(() => {
 const color = computed(() => {
   if (store.sourceStatus === 'connected') return 'success'
   if (store.sourceStatus === 'error') return 'danger'
-  if (['connecting', 'saving'].includes(store.sourceStatus)) return 'warning'
+  if (store.sourceStatus === 'connecting') return 'warning'
   return 'gray'
 })
+
+const formatStep = (s: string) => {
+  switch (s) {
+    case 'welcome': return 'Welcome'
+    case 'source': return 'Source'
+    case 'scope': return 'Scope'
+    case 'scan': return 'Scan'
+    case 'results': return 'Results'
+    default: return s
+  }
+}
 </script>
 
 <style scoped>
-.step {
-  padding: 32px;
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--va-background-secondary);
+  padding: var(--va-gap-large);
+}
+
+.card {
+  width: 100%;
+  max-width: 820px;
+  padding: var(--va-gap-large);
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
+}
+
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--va-gap-small);
+  padding-bottom: var(--va-gap-medium);
+  border-bottom: 1px solid var(--va-background-border);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--va-gap-small);
+  opacity: 0.5;
+}
+
+.step.active,
+.step.done {
+  opacity: 1;
+}
+
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--va-background-border);
+  font-size: 12px;
+}
+
+.step.active .dot {
+  background: var(--va-primary);
+  color: white;
+}
+
+.step.done .dot {
+  background: var(--va-success);
+  color: white;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--va-text-primary);
+}
+
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
 }
 
 .title {
@@ -160,27 +260,27 @@ const color = computed(() => {
 }
 
 .subtitle {
-  margin-top: 6px;
-  margin-bottom: 24px;
+  font-size: 14px;
   color: var(--va-text-secondary);
 }
+
 
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--va-gap-small);
 }
 
 .source-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
+  gap: var(--va-gap-small);
+  padding: var(--va-gap-medium);
   border-radius: 14px;
   border: 1px solid var(--va-background-border);
   background: var(--va-background-element);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .source-card:hover {
@@ -190,7 +290,7 @@ const color = computed(() => {
 
 .source-card.active {
   border-color: var(--va-primary);
-  box-shadow: 0 0 0 2px var(--va-primary-opacity, rgba(0, 120, 255, 0.12));
+  box-shadow: 0 0 0 2px rgba(0, 120, 255, 0.12);
 }
 
 .source-card.disabled {
@@ -199,50 +299,39 @@ const color = computed(() => {
 }
 
 .icon {
-  font-size: 26px;
+  font-size: 24px;
   color: var(--va-primary);
-  flex-shrink: 0;
 }
 
-.content {
+.text {
   flex: 1;
 }
 
 .label {
-  font-size: 14px;
   font-weight: 600;
-  color: var(--va-text-primary);
+  font-size: 14px;
 }
 
 .desc {
   font-size: 12px;
   color: var(--va-text-secondary);
-  margin-top: 2px;
-}
-
-.checkbox {
-  flex-shrink: 0;
 }
 
 .check {
-  color: var(--va-primary);
+  color: var(--va-success);
   font-size: 20px;
 }
 
-.empty {
-  color: var(--va-text-secondary);
-  font-size: 18px;
-}
 
 .chip {
-  margin-top: 16px;
+  margin-top: var(--va-gap-small);
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+
 .actions {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
 }

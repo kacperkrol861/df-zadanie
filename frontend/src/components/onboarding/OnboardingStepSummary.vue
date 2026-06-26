@@ -1,68 +1,92 @@
 <template>
-  <va-card class="step">
+  <div class="wrap">
 
-    <h2 class="title">Summary</h2>
+    <va-card class="card">
 
-    <p class="subtitle">
-      Review your configuration before starting the scan.
-    </p>
+      <div class="stepper">
 
-    <div class="grid">
+        <div
+          v-for="(s, i) in store.steps"
+          :key="s"
+          class="step"
+          :class="{
+            active: store.step === i,
+            done: store.step > i
+          }"
+        >
+          <div class="dot">
+            <Icon v-if="store.step > i" icon="mdi:check" />
+            <span v-else>{{ i + 1 }}</span>
+          </div>
 
-      <va-card class="summary-card">
+          <div class="label">
+            {{ formatStep(s) }}
+          </div>
 
-        <div class="label">Data source</div>
-
-        <div class="value">
-          {{ formattedSource }}
         </div>
 
-      </va-card>
+      </div>
 
-      <va-card class="summary-card">
+      <div class="content">
 
-        <div class="label">Scan scope</div>
+        <h2 class="title">Summary</h2>
 
-        <div class="value">
-          {{ formattedScope }}
+        <p class="subtitle">
+          Review your configuration before starting the scan.
+        </p>
+
+        <div class="grid">
+
+          <div class="summary-card">
+            <div class="label">Data source</div>
+            <div class="value">
+              {{ formattedSource }}
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="label">Scan scope</div>
+            <div class="value">
+              {{ formattedScope }}
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="label">Status</div>
+            <div class="value status">
+              Ready to start
+            </div>
+          </div>
+
         </div>
 
-      </va-card>
-
-      <va-card class="summary-card">
-
-        <div class="label">Status</div>
-
-        <div class="value status">
-          Ready to start
+        <div class="hint">
+          The scan will run in the background. You can track progress in real time.
         </div>
 
-      </va-card>
+        <div class="actions">
 
-    </div>
+          <va-button
+            color="primary"
+            size="large"
+            @click="store.next()"
+          >
+            Start scan
+          </va-button>
 
-    <div class="hint">
-      The scan will run in the background. You can track progress in real time.
-    </div>
+        </div>
 
-    <div class="actions">
+      </div>
 
-      <va-button
-        color="primary"
-        size="large"
-        @click="store.next()"
-      >
-        Start scan
-      </va-button>
+    </va-card>
 
-    </div>
-
-  </va-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useOnboardingStore } from '@/stores/onboarding.store'
+import { Icon } from '@iconify/vue'
 
 const store = useOnboardingStore()
 
@@ -77,14 +101,90 @@ const formattedScope = computed(() => {
     recent: 'Last 30 days',
     custom: 'Custom configuration',
   }
-
   return map[store.scope] || store.scope
 })
+
+const formatStep = (s: string) => {
+  switch (s) {
+    case 'welcome': return 'Welcome'
+    case 'source': return 'Source'
+    case 'scope': return 'Scope'
+    case 'scan': return 'Scan'
+    case 'results': return 'Results'
+    default: return s
+  }
+}
 </script>
 
 <style scoped>
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--va-background-secondary);
+  padding: var(--va-gap-large);
+}
+
+.card {
+  width: 100%;
+  max-width: 820px;
+  padding: var(--va-gap-large);
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
+}
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--va-gap-small);
+  padding-bottom: var(--va-gap-medium);
+  border-bottom: 1px solid var(--va-background-border);
+}
+
 .step {
-  padding: var(--va-spacing-xl, 32px);
+  display: flex;
+  align-items: center;
+  gap: var(--va-gap-small);
+  opacity: 0.5;
+}
+
+.step.active,
+.step.done {
+  opacity: 1;
+}
+
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--va-background-border);
+  font-size: 12px;
+}
+
+.step.active .dot {
+  background: var(--va-primary);
+  color: white;
+}
+
+.step.done .dot {
+  background: var(--va-success);
+  color: white;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--va-text-primary);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--va-gap-large);
 }
 
 .title {
@@ -94,23 +194,22 @@ const formattedScope = computed(() => {
 }
 
 .subtitle {
-  margin-top: var(--va-spacing-xs, 6px);
-  margin-bottom: var(--va-spacing-lg, 24px);
+  font-size: 14px;
   color: var(--va-text-secondary);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--va-spacing-md, 16px);
+  gap: var(--va-gap-small);
 }
 
 .summary-card {
-  padding: var(--va-spacing-md, 16px);
-  border-radius: var(--va-border-radius-md, 12px);
+  padding: var(--va-gap-medium);
+  border-radius: 14px;
   background: var(--va-background-element);
   border: 1px solid var(--va-background-border);
-  transition: all 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .summary-card:hover {
@@ -121,7 +220,7 @@ const formattedScope = computed(() => {
 .label {
   font-size: 12px;
   color: var(--va-text-secondary);
-  margin-bottom: var(--va-spacing-xs, 8px);
+  margin-bottom: 6px;
 }
 
 .value {
@@ -134,17 +233,17 @@ const formattedScope = computed(() => {
   color: var(--va-primary);
 }
 
+
 .hint {
-  margin-top: var(--va-spacing-lg, 20px);
-  padding: var(--va-spacing-md, 14px) var(--va-spacing-md, 16px);
-  border-radius: var(--va-border-radius-sm, 10px);
-  background: rgba(var(--va-primary-rgb, 0, 120, 255), 0.08);
-  color: var(--va-text-primary);
+  padding: var(--va-gap-small);
+  border-radius: 10px;
+  background: rgba(0, 120, 255, 0.08);
   font-size: 13px;
+  color: var(--va-text-primary);
 }
 
+
 .actions {
-  margin-top: var(--va-spacing-lg, 24px);
   display: flex;
   justify-content: flex-end;
 }
