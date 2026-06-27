@@ -4,7 +4,6 @@
     <va-card class="card">
 
       <div class="stepper">
-
         <div
           v-for="(s, i) in store.steps"
           :key="s"
@@ -19,15 +18,12 @@
             <span v-else>{{ i + 1 }}</span>
           </div>
 
-          <div class="label">
+          <div class="step-label">
             {{ formatStep(s) }}
           </div>
-
         </div>
-
       </div>
 
-      
       <div class="content">
 
         <h2 class="title">Connect source</h2>
@@ -36,7 +32,6 @@
           Choose where your data comes from and connect it to continue setup.
         </p>
 
-        
         <div class="stack">
 
           <div
@@ -49,16 +44,15 @@
             }"
             @click="select(s.type)"
           >
-
             <Icon :icon="s.icon" class="icon" />
 
             <div class="text">
-              <div class="label">{{ s.label }}</div>
+              <div class="source-title">{{ s.label }}</div>
               <div class="desc">{{ getDesc(s.type) }}</div>
             </div>
 
             <Icon
-              v-if="store.sourceType === s.type"
+              v-if="store.sourceType === s.type && store.sourceStatus === 'connected'"
               icon="mdi:check-circle"
               class="check"
             />
@@ -67,22 +61,16 @@
 
         </div>
 
-        
         <va-chip class="chip" :color="color">
-
-          <Icon :icon="statusIcon" class="chip-icon" />
-
-          <span class="chip-text">
-            {{ statusText }}
-          </span>
-
+          <Icon :icon="statusIcon" :class="['chip-icon', { spin: store.sourceStatus === 'connecting' }]" />
+          <span>{{ statusText }}</span>
         </va-chip>
 
-        
         <div class="actions">
 
           <va-button
-            v-if="store.sourceStatus === 'idle' || store.sourceStatus === 'error'"
+            v-if="store.sourceStatus !== 'connected'"
+            :loading="store.sourceStatus === 'connecting'"
             :disabled="!store.sourceType || isBusy"
             @click="store.connectSource()"
           >
@@ -90,10 +78,9 @@
           </va-button>
 
           <va-button
-            v-if="store.sourceStatus === 'connected'"
+            v-else
             color="success"
-            @click="store.next()"
-            :disabled="!store.canGoNext"
+            @click="store.next"
           >
             Continue
           </va-button>
@@ -112,24 +99,22 @@ import { computed } from 'vue'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { Icon } from '@iconify/vue'
 
-type SourceType = 'cloud' | 'db' | 'api'
-
 const store = useOnboardingStore()
 
-const sources: { type: SourceType; label: string; icon: string }[] = [
+const sources = [
   { type: 'cloud', label: 'Cloud Drive', icon: 'mdi:cloud-outline' },
   { type: 'db', label: 'Database', icon: 'mdi:database' },
   { type: 'api', label: 'API', icon: 'mdi:api' },
-]
+] as const
 
 const isBusy = computed(() => store.sourceStatus === 'connecting')
 
-const select = (type: SourceType) => {
+const select = (type: any) => {
   if (isBusy.value) return
   store.selectSource(type)
 }
 
-const getDesc = (type: SourceType) => {
+const getDesc = (type: string) => {
   if (type === 'cloud') return 'Google Drive, S3, Dropbox'
   if (type === 'db') return 'PostgreSQL, MySQL, MongoDB'
   return 'REST / GraphQL endpoints'
@@ -137,27 +122,19 @@ const getDesc = (type: SourceType) => {
 
 const statusText = computed(() => {
   switch (store.sourceStatus) {
-    case 'idle':
-      return 'Select a data source'
-    case 'connecting':
-      return 'Connecting to source...'
-    case 'connected':
-      return 'Source connected'
-    case 'error':
-      return 'Connection failed'
+    case 'idle': return 'Select a data source'
+    case 'connecting': return 'Connecting...'
+    case 'connected': return 'Connected'
+    case 'error': return 'Connection failed'
   }
 })
 
 const statusIcon = computed(() => {
   switch (store.sourceStatus) {
-    case 'connecting':
-      return 'mdi:loading'
-    case 'connected':
-      return 'mdi:check-circle'
-    case 'error':
-      return 'mdi:alert-circle'
-    default:
-      return 'mdi:information-outline'
+    case 'connecting': return 'mdi:loading'
+    case 'connected': return 'mdi:check-circle'
+    case 'error': return 'mdi:alert-circle'
+    default: return 'mdi:information-outline'
   }
 })
 
@@ -174,7 +151,7 @@ const formatStep = (s: string) => {
     case 'source': return 'Source'
     case 'scope': return 'Scope'
     case 'scan': return 'Scan'
-    case 'results': return 'Results'
+    case 'summary': return 'Summary'
     default: return s
   }
 }
@@ -198,7 +175,6 @@ const formatStep = (s: string) => {
   flex-direction: column;
   gap: var(--va-gap-large);
 }
-
 
 .stepper {
   display: flex;
@@ -241,11 +217,10 @@ const formatStep = (s: string) => {
   color: white;
 }
 
-.label {
+.step-label {
   font-size: 12px;
   color: var(--va-text-primary);
 }
-
 
 .content {
   display: flex;
@@ -263,7 +238,6 @@ const formatStep = (s: string) => {
   font-size: 14px;
   color: var(--va-text-secondary);
 }
-
 
 .stack {
   display: flex;
@@ -307,7 +281,7 @@ const formatStep = (s: string) => {
   flex: 1;
 }
 
-.label {
+.source-title {
   font-weight: 600;
   font-size: 14px;
 }
@@ -322,7 +296,6 @@ const formatStep = (s: string) => {
   font-size: 20px;
 }
 
-
 .chip {
   margin-top: var(--va-gap-small);
   display: inline-flex;
@@ -330,9 +303,17 @@ const formatStep = (s: string) => {
   gap: 6px;
 }
 
-
 .actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

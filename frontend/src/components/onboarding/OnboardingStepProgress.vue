@@ -4,7 +4,6 @@
     <va-card class="card">
 
       <div class="stepper">
-
         <div
           v-for="(s, i) in store.steps"
           :key="s"
@@ -22,9 +21,7 @@
           <div class="label">
             {{ formatStep(s) }}
           </div>
-
         </div>
-
       </div>
 
       <div class="content">
@@ -35,13 +32,7 @@
           We are analyzing your data source based on selected scope.
         </p>
 
-        <div v-if="store.scan.status === 'idle'" class="start">
-          <va-button color="primary" size="large" @click="store.startScan()">
-            Start scan
-          </va-button>
-        </div>
-
-        <div v-else class="progress-wrap">
+        <div class="progress-wrap">
 
           <div class="progress-header">
             <span>{{ statusText }}</span>
@@ -53,7 +44,7 @@
             size="large"
           />
 
-          <div v-if="store.scan.progress > 30" class="preview">
+          <div class="preview">
 
             <div class="preview-title">
               Live insights
@@ -61,17 +52,26 @@
 
             <div class="cards">
 
-              <va-card class="mini">
+              <va-card
+                v-if="store.scan.progress >= 10"
+                class="mini reveal"
+              >
                 <div class="label">Top category</div>
                 <div class="value">Finance</div>
               </va-card>
 
-              <va-card class="mini">
+              <va-card
+                v-if="store.scan.progress >= 40"
+                class="mini reveal"
+              >
                 <div class="label">Anomalies</div>
                 <div class="value">1,243</div>
               </va-card>
 
-              <va-card class="mini">
+              <va-card
+                v-if="store.scan.progress >= 70"
+                class="mini reveal"
+              >
                 <div class="label">Data quality</div>
                 <div class="value">89%</div>
               </va-card>
@@ -80,7 +80,7 @@
 
           </div>
 
-          <div v-if="store.scan.status === 'done'" class="done">
+          <div v-if="store.scan.status === 'completed'" class="done">
 
             <va-card class="done-card">
               <div class="done-title">Scan completed</div>
@@ -109,22 +109,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { Icon } from '@iconify/vue'
 
 const store = useOnboardingStore()
 
+onMounted(() => {
+  if (store.scan.status === 'idle') {
+    store.startScan()
+  }
+})
+
 const statusText = computed(() => {
   switch (store.scan.status) {
-    case 'idle':
-      return 'Ready to start'
-    case 'running':
-      return 'Scanning data...'
-    case 'done':
-      return 'Completed'
-    default:
-      return ''
+    case 'idle': return 'Preparing scan...'
+    case 'running': return 'Scanning data...'
+    case 'completed': return 'Completed'
+    case 'failed': return 'Failed'
+    default: return ''
   }
 })
 
@@ -134,7 +137,7 @@ const formatStep = (s: string) => {
     case 'source': return 'Source'
     case 'scope': return 'Scope'
     case 'scan': return 'Scan'
-    case 'results': return 'Results'
+    case 'summary': return 'Summary'
     default: return s
   }
 }
@@ -159,7 +162,6 @@ const formatStep = (s: string) => {
   gap: var(--va-gap-large);
 }
 
-/* SAME STEPPER AS WELCOME */
 .stepper {
   display: flex;
   justify-content: space-between;
@@ -206,7 +208,6 @@ const formatStep = (s: string) => {
   color: var(--va-text-primary);
 }
 
-/* CONTENT */
 .content {
   display: flex;
   flex-direction: column;
@@ -224,14 +225,6 @@ const formatStep = (s: string) => {
   color: var(--va-text-secondary);
 }
 
-/* START */
-.start {
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
-
-/* PROGRESS */
 .progress-wrap {
   display: flex;
   flex-direction: column;
@@ -250,7 +243,6 @@ const formatStep = (s: string) => {
   color: var(--va-text-primary);
 }
 
-/* PREVIEW */
 .preview-title {
   font-size: 13px;
   font-weight: 600;
@@ -268,6 +260,16 @@ const formatStep = (s: string) => {
   text-align: center;
   background: var(--va-background-element);
   border: 1px solid var(--va-background-border);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: reveal 0.35s ease forwards;
+}
+
+@keyframes reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .label {
@@ -281,7 +283,6 @@ const formatStep = (s: string) => {
   margin-top: 6px;
 }
 
-/* DONE */
 .done {
   display: flex;
   flex-direction: column;

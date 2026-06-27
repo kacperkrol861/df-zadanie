@@ -4,7 +4,6 @@
     <va-card class="card">
 
       <div class="stepper">
-
         <div
           v-for="(s, i) in store.steps"
           :key="s"
@@ -22,9 +21,7 @@
           <div class="label">
             {{ formatStep(s) }}
           </div>
-
         </div>
-
       </div>
 
       <div class="content">
@@ -39,22 +36,18 @@
 
           <div class="summary-card">
             <div class="label">Data source</div>
-            <div class="value">
-              {{ formattedSource }}
-            </div>
+            <div class="value">{{ formattedSource }}</div>
           </div>
 
           <div class="summary-card">
             <div class="label">Scan scope</div>
-            <div class="value">
-              {{ formattedScope }}
-            </div>
+            <div class="value">{{ formattedScope }}</div>
           </div>
 
           <div class="summary-card">
             <div class="label">Status</div>
             <div class="value status">
-              Ready to start
+              {{ loading ? 'Preparing scan...' : 'Ready to start' }}
             </div>
           </div>
 
@@ -69,7 +62,9 @@
           <va-button
             color="primary"
             size="large"
-            @click="store.next()"
+            :loading="loading"
+            :disabled="!canStart"
+            @click="start"
           >
             Start scan
           </va-button>
@@ -84,11 +79,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { Icon } from '@iconify/vue'
 
 const store = useOnboardingStore()
+
+const loading = ref(false)
+
+const canStart = computed(() =>
+  !!store.sourceType &&
+  !!store.scope &&
+  store.scan.status === 'idle'
+)
+
+const start = async () => {
+  loading.value = true
+
+  await new Promise(r => setTimeout(r, 800))
+
+  store.next()
+  await store.startScan()
+
+  loading.value = false
+}
 
 const formattedSource = computed(() => {
   if (!store.sourceType) return 'Not selected'
@@ -110,7 +124,7 @@ const formatStep = (s: string) => {
     case 'source': return 'Source'
     case 'scope': return 'Scope'
     case 'scan': return 'Scan'
-    case 'results': return 'Results'
+    case 'summary': return 'Summary'
     default: return s
   }
 }
@@ -233,7 +247,6 @@ const formatStep = (s: string) => {
   color: var(--va-primary);
 }
 
-
 .hint {
   padding: var(--va-gap-small);
   border-radius: 10px;
@@ -241,7 +254,6 @@ const formatStep = (s: string) => {
   font-size: 13px;
   color: var(--va-text-primary);
 }
-
 
 .actions {
   display: flex;

@@ -3,64 +3,26 @@ import { ref, computed } from 'vue'
 import { useMockApi } from '@/composables/useMockApi'
 
 export type SourceStatus = 'idle' | 'connecting' | 'connected' | 'error'
-export type ScanStatus = 'idle' | 'running' | 'done'
-export type SourceType = 'cloud' | 'db' | 'api'
 
-export type StepState = 'done' | 'active' | 'locked'
+export type ScanStatus =
+  | 'idle'
+  | 'initializing'
+  | 'running'
+  | 'completed'
+  | 'failed'
+
+export type SourceType = 'cloud' | 'db' | 'api'
 
 export const useOnboardingStore = defineStore('onboarding', () => {
   const api = useMockApi()
 
-  const steps = [
-    'welcome',
-    'source',
-    'scope',
-    'scan',
-    'results',
-  ] as const
-
+  const steps = ['welcome', 'source', 'scope', 'summary', 'scan'] as const
   const step = ref(0)
-
-  const currentStep = computed(() => steps[step.value])
-
-  const isFirstStep = computed(() => step.value === 0)
-  const isLastStep = computed(() => step.value === steps.length - 1)
-
-  const progress = computed(() =>
-    steps.length <= 1 ? 0 : (step.value / (steps.length - 1)) * 100
-  )
-
-  const stepStatus = computed<StepState[]>(() => {
-    return steps.map((_, index) => {
-      if (index < step.value) return 'done'
-      if (index === step.value) return 'active'
-      return 'locked'
-    })
-  })
-
-  const stepList = computed(() =>
-    steps.map((name, index) => ({
-      name,
-      index,
-      status: stepStatus.value[index],
-      isActive: index === step.value,
-      isDone: index < step.value,
-      isLocked: index > step.value,
-    }))
-  )
-
-const canGoNext = computed(() => {
-  if (currentStep.value === 'source') return sourceStatus.value === 'connected'
-  return true
-})
-
-  const canGoPrev = computed(() => false)
 
   const sourceType = ref<SourceType | null>(null)
   const sourceStatus = ref<SourceStatus>('idle')
 
   const scope = ref<'all' | 'recent' | 'custom'>('all')
-
   const customRange = ref<{ from: string | null; to: string | null }>({
     from: null,
     to: null,
@@ -71,26 +33,38 @@ const canGoNext = computed(() => {
     progress: 0,
   })
 
-  const next = async () => {
+  const currentStep = computed(() => steps[step.value])
+  const isLastStep = computed(() => step.value === steps.length - 1)
+
+  const canGoNext = computed(() => {
+    if (currentStep.value === 'source') {
+      return sourceStatus.value === 'connected'
+    }
+
+    if (currentStep.value === 'summary') {
+      return sourceType.value !== null && scope.value !== null
+    }
+
+    return true
+  })
+
+  const goTo = (index: number) => {
+    if (index >= 0 && index < steps.length) {
+      step.value = index
+    }
+  }
+
+  const next = () => {
     if (!canGoNext.value) return
-    if (step.value < steps.length - 1) step.value++
+    goTo(step.value + 1)
   }
 
-  const setStep = (index: number) => {
-    return
+  const prev = () => {
+    goTo(step.value - 1)
   }
 
-  const reset = () => {
-    step.value = 0
-    sourceType.value = null
-    sourceStatus.value = 'idle'
-    scope.value = 'all'
-    customRange.value = { from: null, to: null }
-    scan.value = { status: 'idle', progress: 0 }
-  }
-
-  const selectSource = (type: SourceType) => {
-    sourceType.value = type
+  const selectSource = (t: SourceType) => {
+    sourceType.value = t
   }
 
   const connectSource = async () => {
@@ -107,20 +81,30 @@ const canGoNext = computed(() => {
   }
 
   const startScan = async () => {
-    scan.value.status = 'running'
+    if (scan.value.status !== 'idle') return
+
+    scan.value.status = 'initializing'
     scan.value.progress = 0
 
+    await new Promise((r) => setTimeout(r, 900))
+
+    scan.value.status = 'running'
+
     try {
-      await api.runScan((v) => {
+      await api.runScan((v: number) => {
         scan.value.progress = v
       })
 
-      scan.value.status = 'done'
       scan.value.progress = 100
+      scan.value.status = 'completed'
     } catch {
-      scan.value.status = 'idle'
-      scan.value.progress = 0
+      scan.value.status = 'failed'
     }
+  }
+
+  const resetScan = () => {
+    scan.value.status = 'idle'
+    scan.value.progress = 0
   }
 
   const setScope = (v: 'all' | 'recent' | 'custom') => {
@@ -135,12 +119,6 @@ const canGoNext = computed(() => {
     steps,
     step,
     currentStep,
-    progress,
-    isFirstStep,
-    isLastStep,
-
-    stepStatus,
-    stepList,
 
     sourceType,
     sourceStatus,
@@ -150,16 +128,17 @@ const canGoNext = computed(() => {
 
     scan,
 
-    next,
-    canGoNext,
-    canGoPrev,
+    isLastStep,
 
-    reset,
+    canGoNext,
+    next,
+    prev,
+    goTo,
 
     selectSource,
     connectSource,
     startScan,
-
+    resetScan,
     setScope,
     setCustomRange,
   }

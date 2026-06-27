@@ -3,9 +3,7 @@
 
     <va-card class="card">
 
-      
       <div class="stepper">
-
         <div
           v-for="(s, i) in store.steps"
           :key="s"
@@ -20,12 +18,10 @@
             <span v-else>{{ i + 1 }}</span>
           </div>
 
-          <div class="label">
+          <div class="step-label">
             {{ formatStep(s) }}
           </div>
-
         </div>
-
       </div>
 
       <h2 class="title">Scan scope</h2>
@@ -54,9 +50,9 @@
               />
             </div>
 
-            <div class="content">
-              <div class="label">{{ o.label }}</div>
-              <div class="desc">{{ o.desc }}</div>
+            <div class="option-content">
+              <div class="option-title">{{ o.label }}</div>
+              <div class="option-desc">{{ o.desc }}</div>
             </div>
 
           </div>
@@ -66,10 +62,8 @@
             <div class="date-title">Custom range</div>
 
             <div class="dates">
-
-              <va-input v-model="from" type="date" label="From" />
-              <va-input v-model="to" type="date" label="To" />
-
+              <va-input v-model="from" type="date" />
+              <va-input v-model="to" type="date" />
             </div>
 
             <va-button
@@ -129,18 +123,12 @@ import { computed, ref } from 'vue'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { Icon } from '@iconify/vue'
 
-type ScopeType = 'all' | 'recent' | 'custom'
-
 const store = useOnboardingStore()
 
 const from = ref('')
 const to = ref('')
 
-const options: {
-  value: ScopeType
-  label: string
-  desc: string
-}[] = [
+const options = [
   {
     value: 'all',
     label: 'Full scan',
@@ -158,7 +146,7 @@ const options: {
   },
 ]
 
-const select = (value: ScopeType) => {
+const select = (value: any) => {
   store.setScope(value)
 }
 
@@ -176,7 +164,7 @@ const formatStep = (s: string) => {
     case 'source': return 'Source'
     case 'scope': return 'Scope'
     case 'scan': return 'Scan'
-    case 'results': return 'Results'
+    case 'summary': return 'Summary'
     default: return s
   }
 }
@@ -242,7 +230,7 @@ const formatStep = (s: string) => {
   color: white;
 }
 
-.label {
+.step-label {
   font-size: 12px;
   color: var(--va-text-primary);
 }
@@ -296,16 +284,16 @@ const formatStep = (s: string) => {
   color: var(--va-primary);
 }
 
-.content {
+.option-content {
   flex: 1;
 }
 
-.label {
+.option-title {
   font-weight: 600;
   font-size: 14px;
 }
 
-.desc {
+.option-desc {
   font-size: 12px;
   color: var(--va-text-secondary);
   margin-top: 4px;
@@ -334,9 +322,9 @@ const formatStep = (s: string) => {
   padding: 16px;
   border-radius: 14px;
   background: var(--va-background-secondary);
-  height: fit-content;
   position: sticky;
   top: 16px;
+  height: fit-content;
 }
 
 .summary-title {
@@ -359,7 +347,6 @@ const formatStep = (s: string) => {
 .range {
   margin-top: 12px;
   font-size: 12px;
-  color: var(--va-text-primary);
 }
 
 .actions {

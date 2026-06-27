@@ -36,7 +36,7 @@
         </h1>
 
         <p class="subtitle">
-          Automate data scanning in minutes.  
+          Automate data scanning in minutes.
           We’ll guide you step by step through setup and your first scan.
         </p>
 
@@ -63,8 +63,8 @@
           <va-button
             size="large"
             color="primary"
-            @click="store.next"
-            :disabled="store.isLastStep"
+            :disabled="!store.canGoNext"
+            @click="store.next()"
           >
             Continue
           </va-button>
@@ -89,7 +89,7 @@ const formatStep = (s: string) => {
     case 'source': return 'Source'
     case 'scope': return 'Scope'
     case 'scan': return 'Scan'
-    case 'results': return 'Results'
+    case 'summary': return 'Summary'
     default: return s
   }
 }
@@ -129,10 +129,7 @@ const formatStep = (s: string) => {
   opacity: 0.5;
 }
 
-.step.active {
-  opacity: 1;
-}
-
+.step.active,
 .step.done {
   opacity: 1;
 }
@@ -184,7 +181,6 @@ const formatStep = (s: string) => {
   margin: var(--va-gap-medium) 0;
 }
 
-
 .features {
   display: flex;
   flex-direction: column;
@@ -202,7 +198,6 @@ const formatStep = (s: string) => {
   color: var(--va-primary);
   font-size: 18px;
 }
-
 
 .actions {
   display: flex;

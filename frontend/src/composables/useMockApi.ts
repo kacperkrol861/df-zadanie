@@ -1,6 +1,11 @@
 export type SourceType = 'cloud' | 'db' | 'api'
 
-export type ScanStatus = 'queued' | 'running' | 'completed' | 'failed'
+export type ScanStatus =
+  | 'idle'
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
 
 export interface KPI {
   label: string
@@ -48,13 +53,9 @@ export const useMockApi = () => {
   const delay = (ms: number) =>
     new Promise(resolve => setTimeout(resolve, ms))
 
-  
-  // SOURCES
-  
-
   const connectSource = async (type: SourceType) => {
     await delay(1200)
-    await delay(900)
+    await delay(800)
 
     const ok = Math.random() > 0.2
 
@@ -63,10 +64,6 @@ export const useMockApi = () => {
       type,
     }
   }
-
-  
-  // SCANS
-  
 
   const fetchScans = async (): Promise<ScanItem[]> => {
     await delay(800)
@@ -116,7 +113,7 @@ export const useMockApi = () => {
     name: string
     sourceType: SourceType
   }): Promise<ScanItem> => {
-    await delay(800)
+    await delay(700)
 
     return {
       id: crypto.randomUUID(),
@@ -129,7 +126,7 @@ export const useMockApi = () => {
   }
 
   const deleteScan = async (id: string) => {
-    await delay(500)
+    await delay(400)
     return { success: true, id }
   }
 
@@ -138,25 +135,8 @@ export const useMockApi = () => {
 
     while (progress < 100) {
       await delay(200)
-      progress += 8
-      if (progress > 100) progress = 100
-      onProgress(progress)
-    }
-
-    return { status: 'done' as const }
-  }
-
-  const updateScanProgress = async (
-    onProgress: (v: number) => void
-  ) => {
-    let progress = 0
-
-    while (progress < 100) {
-      await delay(250)
       progress += Math.floor(Math.random() * 12)
-
       if (progress > 100) progress = 100
-
       onProgress(progress)
     }
 
@@ -191,7 +171,7 @@ export const useMockApi = () => {
   const fetchScanResults = async (
     scanId: string
   ): Promise<ScanResultItem[]> => {
-    await delay(1100)
+    await delay(1000)
 
     return [
       { id: 'r1', scanId, category: 'Revenue anomalies', value: 12 },
@@ -200,10 +180,6 @@ export const useMockApi = () => {
       { id: 'r4', scanId, category: 'Schema drift', value: 2 },
     ]
   }
-
-  
-  // DASHBOARD
- 
 
   const fetchDashboard = async (): Promise<DashboardData> => {
     await delay(900)
@@ -222,7 +198,7 @@ export const useMockApi = () => {
   }
 
   const fetchRecentActivity = async (): Promise<ActivityItem[]> => {
-    await delay(1400)
+    await delay(1200)
 
     return [
       {
@@ -254,22 +230,13 @@ export const useMockApi = () => {
 
   return {
     connectSource,
-
-    // scans core
     fetchScans,
     fetchScanById,
     createScan,
     deleteScan,
-
-    // runtime
     runScan,
-    updateScanProgress,
-
-    // logs/results
     fetchScanLogs,
     fetchScanResults,
-
-    // dashboard
     fetchDashboard,
     fetchRecentActivity,
   }
