@@ -151,22 +151,37 @@ const formatStep = (s: string) => {
 
 .stepper {
   display: flex;
-  justify-content: space-between;
-  gap: var(--va-gap-small);
-  padding-bottom: var(--va-gap-medium);
-  border-bottom: 1px solid var(--va-background-border);
+  align-items: flex-start;
+  margin-bottom: var(--va-gap-large);
 }
 
 .step {
+  flex: 1;
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--va-gap-small);
+  text-align: center;
   opacity: 0.5;
 }
 
 .step.active,
 .step.done {
   opacity: 1;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: calc(50% + 18px);
+  width: calc(100% - 36px);
+  height: 2px;
+  background: var(--va-background-border);
+}
+
+.step.done:not(:last-child)::after {
+  background: var(--va-success);
 }
 
 .dot {
@@ -178,6 +193,8 @@ const formatStep = (s: string) => {
   justify-content: center;
   background: var(--va-background-border);
   font-size: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .step.active .dot {
@@ -191,10 +208,27 @@ const formatStep = (s: string) => {
 }
 
 .label {
+  margin-top: 8px;
   font-size: 12px;
   color: var(--va-text-primary);
 }
 
+@media (max-width: 768px) {
+  .stepper {
+    overflow-x: auto;
+    gap: var(--va-gap-medium);
+    padding-bottom: var(--va-gap-small);
+  }
+
+  .step {
+    min-width: 80px;
+    flex: none;
+  }
+
+  .step:not(:last-child)::after {
+    width: 60px;
+  }
+}
 .content {
   display: flex;
   flex-direction: column;

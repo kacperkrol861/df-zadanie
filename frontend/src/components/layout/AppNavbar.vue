@@ -7,14 +7,18 @@
 
     <div class="right">
 
-      <va-button
-        size="small"
-        preset="secondary"
-        class="theme-toggle"
-        @click="toggleTheme"
-      >
-        <Icon :icon="isDark ? 'mdi:weather-sunny' : 'mdi:weather-night'" />
-      </va-button>
+      <div class="theme-switch" @click="toggleTheme">
+
+        <div class="switch">
+          <div class="thumb" :class="{ dark: isDark }">
+            <Icon
+              :icon="isDark ? 'mdi:weather-night' : 'mdi:weather-sunny'"
+              class="thumb-icon"
+            />
+          </div>
+        </div>
+
+      </div>
 
       <div class="user">
         <div class="avatar">K</div>
@@ -64,10 +68,43 @@ const title = 'DataFlow'
   gap: var(--va-gap-medium);
 }
 
-.theme-toggle {
+.theme-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.switch {
+  width: 52px;
+  height: 28px;
+  background: var(--va-background-border);
+  border-radius: 999px;
+  position: relative;
+  transition: 0.2s ease;
+}
+
+.thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--va-background-element);
+  position: absolute;
+  top: 2px;
+  left: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.thumb.dark {
+  transform: translateX(24px);
+}
+
+.thumb-icon {
+  font-size: 14px;
+  color: var(--va-primary);
 }
 
 .avatar {

@@ -5,25 +5,42 @@
 
       <div class="stepper">
 
-        <div
+        <template
           v-for="(s, i) in store.steps"
           :key="s"
-          class="step"
-          :class="{
-            active: store.step === i,
-            done: store.step > i
-          }"
         >
-          <div class="dot">
-            <Icon v-if="store.step > i" icon="mdi:check" />
-            <span v-else>{{ i + 1 }}</span>
+
+          <div
+            class="step"
+            :class="{
+              active: store.step === i,
+              done: store.step > i
+            }"
+          >
+            <div class="dot">
+              <Icon
+                v-if="store.step > i"
+                icon="mdi:check"
+              />
+              <span v-else>
+                {{ i + 1 }}
+              </span>
+            </div>
+
+            <div class="label">
+              {{ formatStep(s) }}
+            </div>
           </div>
 
-          <div class="label">
-            {{ formatStep(s) }}
-          </div>
+          <div
+            v-if="i < store.steps.length - 1"
+            class="connector"
+            :class="{
+              done: store.step > i
+            }"
+          />
 
-        </div>
+        </template>
 
       </div>
 
@@ -88,8 +105,9 @@ const formatStep = (s: string) => {
     case 'welcome': return 'Welcome'
     case 'source': return 'Source'
     case 'scope': return 'Scope'
-    case 'scan': return 'Scan'
     case 'summary': return 'Summary'
+    case 'scan': return 'Scan'
+    case 'results': return 'Results'
     default: return s
   }
 }
@@ -116,17 +134,21 @@ const formatStep = (s: string) => {
 
 .stepper {
   display: flex;
-  justify-content: space-between;
-  gap: var(--va-gap-small);
+  align-items: flex-start;
+  width: 100%;
   padding-bottom: var(--va-gap-medium);
   border-bottom: 1px solid var(--va-background-border);
 }
 
 .step {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--va-gap-small);
+  min-width: 80px;
+  flex-shrink: 0;
   opacity: 0.5;
+  transition: 0.2s ease;
 }
 
 .step.active,
@@ -134,15 +156,32 @@ const formatStep = (s: string) => {
   opacity: 1;
 }
 
+.connector {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  margin-top: 14px;
+  background: var(--va-background-border);
+  overflow: hidden;
+}
+
+.connector.done::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--va-primary);
+}
+
 .dot {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--va-background-border);
   font-size: 12px;
+  transition: 0.2s ease;
 }
 
 .step.active .dot {
@@ -157,6 +196,7 @@ const formatStep = (s: string) => {
 
 .label {
   font-size: 12px;
+  text-align: center;
   color: var(--va-text-primary);
 }
 
