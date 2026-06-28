@@ -1,8 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useMockApi, type ScanItem, type ScanLog, type ScanResultItem } from '@/composables/useMockApi'
-import { useScanRunner } from '@/composables/useScanRunner'
-
+import {
+  useMockApi,
+  type ScanItem,
+  type ScanLog,
+  type ScanResultItem,
+} from '@/composables/useMockApi'
 
 export const useScansStore = defineStore('scans', () => {
   const api = useMockApi()
@@ -10,151 +13,228 @@ export const useScansStore = defineStore('scans', () => {
   const scans = ref<ScanItem[]>([])
   const selectedScan = ref<ScanItem | null>(null)
 
-  const runner = useScanRunner()
-  const logs = ref<ScanLog[]>([])
-  const results = ref<ScanResultItem[]>([])
+  const logsByScan = ref<Record<string, ScanLog[]>>({})
+  const resultsByScan = ref<Record<string, ScanResultItem[]>>({})
+  const previewResultsByScan = ref<Record<string, ScanResultItem[]>>({})
 
+  const runningScanId = ref<string | null>(null)
 
   const isLoading = ref(false)
   const isDetailLoading = ref(false)
-  const isLogsLoading = ref(false)
-  const isResultsLoading = ref(false)
-
   const error = ref<string | null>(null)
 
-  const isEmpty = computed(() => {
-    return !isLoading.value && scans.value.length === 0
-  })
+  const isEmpty = computed(() =>
+    !isLoading.value && scans.value.length === 0
+  )
 
+  // -------------------------
+  // HELPERS
+  // -------------------------
+  const ensureArrays = (id: string) => {
+    if (!logsByScan.value[id]) logsByScan.value[id] = []
+    if (!resultsByScan.value[id]) resultsByScan.value[id] = []
+    if (!previewResultsByScan.value[id]) previewResultsByScan.value[id] = []
+  }
 
+  const pushLog = (scanId: string, message: string) => {
+    ensureArrays(scanId)
+
+    logsByScan.value[scanId].push({
+      id: crypto.randomUUID(),
+      scanId,
+      message,
+      timestamp: Date.now(),
+    })
+  }
+
+  const updateScan = (scan: ScanItem) => {
+    const idx = scans.value.findIndex(s => s.id === scan.id)
+
+    if (idx !== -1) scans.value[idx] = { ...scan }
+    else scans.value.unshift({ ...scan })
+
+    if (selectedScan.value?.id === scan.id) {
+      selectedScan.value = { ...scan }
+    }
+  }
+
+  // -------------------------
+  // LIST
+  // -------------------------
   const fetchScans = async () => {
-    if (isLoading.value) return
-
     isLoading.value = true
-    error.value = null
-
     try {
       scans.value = await api.fetchScans()
-    } catch {
-      error.value = 'Failed to load scans'
     } finally {
       isLoading.value = false
     }
   }
 
-  
+  // -------------------------
+  // DETAIL (SMART HYDRATION)
+  // -------------------------
   const fetchScan = async (id: string) => {
     isDetailLoading.value = true
-    error.value = null
 
     try {
-      selectedScan.value = await api.fetchScanById(id)
-    } catch {
-      error.value = 'Failed to load scan'
+      const scan = await api.fetchScanById(id)
+      selectedScan.value = scan
+
+      ensureArrays(id)
+
+      // 🔥 HYDRATION RULES (KLUCZ UX)
+      if (scan.status === 'queued') {
+        logsByScan.value[id] = await api.fetchScanLogs(id)
+        resultsByScan.value[id] = []
+        previewResultsByScan.value[id] = []
+      }
+
+      if (scan.status === 'running') {
+        logsByScan.value[id] = await api.fetchScanLogs(id)
+        resultsByScan.value[id] = []
+        previewResultsByScan.value[id] = await api.fetchRunningPreview(id)
+      }
+
+      if (scan.status === 'completed') {
+        logsByScan.value[id] = await api.fetchScanLogs(id)
+        resultsByScan.value[id] = await api.fetchScanResults(id)
+        previewResultsByScan.value[id] = []
+      }
+
+      if (scan.status === 'failed') {
+        logsByScan.value[id] = await api.fetchScanLogs(id)
+        resultsByScan.value[id] = []
+        previewResultsByScan.value[id] = []
+      }
     } finally {
       isDetailLoading.value = false
     }
   }
 
-  const fetchLogs = async (scanId: string) => {
-    isLogsLoading.value = true
+  // -------------------------
+  // RUN SCAN (LIVE ENGINE)
+  // -------------------------
+  const runScan = async (scanId: string) => {
+    const base = scans.value.find(s => s.id === scanId)
+    if (!base || runningScanId.value) return
+
+    runningScanId.value = scanId
+
+    ensureArrays(scanId)
+    logsByScan.value[scanId] = []
+    resultsByScan.value[scanId] = []
+    previewResultsByScan.value[scanId] = []
 
     try {
-      logs.value = await api.fetchScanLogs(scanId)
-    } catch {
-      logs.value = []
+      let progress = 0
+
+      let liveScan: ScanItem = {
+        ...base,
+        status: 'running',
+        progress: 0,
+      }
+
+      updateScan(liveScan)
+
+      const steps = [
+        'Initializing scan engine...',
+        'Connecting to source...',
+        'Loading schema...',
+        'Indexing data...',
+        'Running anomaly detection...',
+        'Validating results...',
+      ]
+
+      for (const step of steps) {
+        pushLog(scanId, step)
+
+        await sleep(300)
+
+        progress += Math.random() * 12
+
+        liveScan = {
+          ...liveScan,
+          progress: Math.min(Math.round(progress), 90),
+        }
+
+        updateScan(liveScan)
+
+        previewResultsByScan.value[scanId] = await api.fetchRunningPreview(scanId)
+      }
+
+      pushLog(scanId, 'Finalizing report...')
+
+      await sleep(500)
+
+      const finalResults = await api.fetchScanResults(scanId)
+
+      resultsByScan.value[scanId] = finalResults
+      previewResultsByScan.value[scanId] = []
+
+      pushLog(scanId, 'Scan completed')
+
+      updateScan({
+        ...liveScan,
+        status: 'completed',
+        progress: 100,
+      })
+    } catch (e) {
+      pushLog(scanId, 'Scan failed')
+
+      updateScan({
+        ...base,
+        status: 'failed',
+      })
     } finally {
-      isLogsLoading.value = false
+      runningScanId.value = null
     }
   }
 
-  const fetchResults = async (scanId: string) => {
-    isResultsLoading.value = true
+  // -------------------------
+  // GETTERS
+  // -------------------------
+  const getLogs = (id: string) => logsByScan.value[id] ?? []
+  const getResults = (id: string) => resultsByScan.value[id] ?? []
+  const getPreviewResults = (id: string) => previewResultsByScan.value[id] ?? []
 
-    try {
-      results.value = await api.fetchScanResults(scanId)
-    } catch {
-      results.value = []
-    } finally {
-      isResultsLoading.value = false
-    }
-  }
-
-  
-const updateScanInList = (scan: ScanItem) => {
-  const index = scans.value.findIndex(s => s.id === scan.id)
-
-  if (index !== -1) {
-    scans.value[index] = scan
-  }
-}
-
-const runScan = async () => {
-  if (!selectedScan.value) return
-
-  await runner.run({
-    scan: selectedScan.value,
-
-    onProgress: (updated) => {
-      selectedScan.value = updated
-      updateScanInList(updated)
-    },
-
-    onLog: (log) => {
-      logs.value.unshift(log)
-    },
-
-    onFinish: (scan, resultsData) => {
-      selectedScan.value = scan
-      updateScanInList(scan)
-      results.value = resultsData
-    },
-  })
-}
-  
-  const resetSelected = () => {
-    selectedScan.value = null
-    logs.value = []
-    results.value = []
-  }
+  const isScanRunning = (id: string) => runningScanId.value === id
 
   const reset = () => {
     scans.value = []
     selectedScan.value = null
-    logs.value = []
-    results.value = []
+
+    logsByScan.value = {}
+    resultsByScan.value = {}
+    previewResultsByScan.value = {}
+
+    runningScanId.value = null
 
     isLoading.value = false
     isDetailLoading.value = false
-    isLogsLoading.value = false
-    isResultsLoading.value = false
-
     error.value = null
   }
 
   return {
-    
     scans,
     selectedScan,
-    logs,
-    results,
 
-    
     isLoading,
     isDetailLoading,
-    isLogsLoading,
-    isResultsLoading,
     error,
     isEmpty,
 
-   
     fetchScans,
     fetchScan,
-    fetchLogs,
-    fetchResults,
     runScan,
 
-    resetSelected,
+    getLogs,
+    getResults,
+    getPreviewResults,
+    isScanRunning,
+    
     reset,
   }
 })
+
+const sleep = (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms))

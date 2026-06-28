@@ -3,7 +3,6 @@
 
     <h1 class="title">Dashboard</h1>
 
-    
     <div v-if="store.isLoading">
 
       <div class="kpi-grid">
@@ -27,20 +26,16 @@
 
     </div>
 
-    
     <div v-else-if="store.error" class="state error">
       {{ store.error }}
     </div>
 
-    
     <div v-else-if="store.isEmpty" class="state">
       No data available
     </div>
 
-    <!-- CONTENT -->
     <template v-else>
 
-      <!-- KPI -->
       <div class="kpi-grid">
         <va-card
           v-for="kpi in store.kpis"
@@ -48,19 +43,14 @@
           class="kpi"
         >
           <div class="label">{{ kpi.label }}</div>
-
           <div class="value">{{ kpi.value }}</div>
 
-          <div
-            v-if="kpi.trend !== undefined"
-            class="trend"
-          >
+          <div v-if="kpi.trend !== undefined" class="trend">
             {{ kpi.trend > 0 ? '+' : '' }}{{ kpi.trend }}%
           </div>
         </va-card>
       </div>
 
-      <!-- CHARTS -->
       <div class="charts">
 
         <va-card class="chart">
@@ -86,7 +76,6 @@
 
       </div>
 
-      <!-- ACTIVITY -->
       <va-card class="activity">
         <h3 class="section-title">Recent activity</h3>
 
@@ -97,10 +86,7 @@
         </div>
 
         <ul v-else>
-          <li
-            v-for="item in store.activity"
-            :key="item.id"
-          >
+          <li v-for="item in store.activity" :key="item.id">
             {{ item.title }}
           </li>
         </ul>
@@ -124,13 +110,9 @@ onMounted(() => {
   }
 })
 
-
 const quality = computed(() => {
   const sources = store.kpis.find(k => k.label === 'Sources')?.value
-
   if (!sources || typeof sources !== 'number') return 0
-
-  
   return Math.min(100, 70 + sources * 5)
 })
 </script>
@@ -140,26 +122,16 @@ const quality = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--va-gap-large);
+  padding: var(--va-gap-large);
+  background: var(--va-background-secondary);
+  min-height: 100vh;
 }
-
 
 .title {
   font-size: 22px;
   font-weight: 600;
   color: var(--va-text-primary);
 }
-
-
-.state {
-  padding: var(--va-gap-large);
-  text-align: center;
-  color: var(--va-text-secondary);
-}
-
-.error {
-  color: var(--va-danger);
-}
-
 
 .kpi-grid {
   display: grid;
@@ -169,6 +141,15 @@ const quality = computed(() => {
 
 .kpi {
   padding: var(--va-gap-medium);
+  border-radius: 14px;
+  background: var(--va-background-element);
+  border: 1px solid var(--va-background-border);
+  transition: 0.2s ease;
+}
+
+.kpi:hover {
+  transform: translateY(-2px);
+  border-color: var(--va-primary);
 }
 
 .label {
@@ -178,7 +159,7 @@ const quality = computed(() => {
 
 .value {
   margin-top: var(--va-gap-small);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--va-text-primary);
 }
@@ -189,7 +170,6 @@ const quality = computed(() => {
   color: var(--va-primary);
 }
 
-
 .charts {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -198,6 +178,9 @@ const quality = computed(() => {
 
 .chart {
   padding: var(--va-gap-medium);
+  border-radius: 14px;
+  background: var(--va-background-element);
+  border: 1px solid var(--va-background-border);
 }
 
 .section-title {
@@ -206,7 +189,6 @@ const quality = computed(() => {
   color: var(--va-text-primary);
   margin-bottom: var(--va-gap-medium);
 }
-
 
 .fake-chart {
   display: flex;
@@ -222,7 +204,6 @@ const quality = computed(() => {
   border-radius: 6px 6px 0 0;
 }
 
-/* DONUT */
 .donut {
   width: 120px;
   height: 120px;
@@ -243,6 +224,9 @@ const quality = computed(() => {
 
 .activity {
   padding: var(--va-gap-medium);
+  border-radius: 14px;
+  background: var(--va-background-element);
+  border: 1px solid var(--va-background-border);
 }
 
 .activity-loading {
@@ -265,6 +249,17 @@ li {
 
 li:last-child {
   border-bottom: none;
+}
+
+
+.state {
+  padding: var(--va-gap-large);
+  text-align: center;
+  color: var(--va-text-secondary);
+}
+
+.error {
+  color: var(--va-danger);
 }
 
 

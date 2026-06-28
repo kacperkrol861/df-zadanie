@@ -6,15 +6,30 @@
 
       <div class="actions">
         <div class="filters">
-          <va-button size="small" preset="secondary" @click="filter = 'all'">
+          <va-button
+            size="small"
+            preset="secondary"
+            :class="{ active: filter === 'all' }"
+            @click="filter = 'all'"
+          >
             All
           </va-button>
 
-          <va-button size="small" preset="secondary" @click="filter = 'running'">
+          <va-button
+            size="small"
+            preset="secondary"
+            :class="{ active: filter === 'running' }"
+            @click="filter = 'running'"
+          >
             Running
           </va-button>
 
-          <va-button size="small" preset="secondary" @click="filter = 'completed'">
+          <va-button
+            size="small"
+            preset="secondary"
+            :class="{ active: filter === 'completed' }"
+            @click="filter = 'completed'"
+          >
             Done
           </va-button>
         </div>
@@ -30,26 +45,22 @@
       </div>
     </div>
 
-    
     <div v-if="store.isLoading" class="grid">
-      <va-card v-for="n in 6" :key="n" class="card">
+      <va-card v-for="n in 6" :key="n" class="card skeleton">
         <va-skeleton height="16px" />
-        <va-skeleton height="24px" class="mt" />
+        <va-skeleton height="22px" class="mt" />
         <va-skeleton height="12px" class="mt-sm" />
       </va-card>
     </div>
 
-    
     <div v-else-if="store.error" class="state error">
       {{ store.error }}
     </div>
 
-    
     <div v-else-if="store.isEmpty" class="state">
       No scans yet. Start your first scan in onboarding.
     </div>
 
-    
     <div v-else class="grid">
 
       <va-card
@@ -62,16 +73,13 @@
 
         <div class="top">
 
-          <div>
-            <div class="name">
-              {{ scan.name }}
-            </div>
+          <div class="left">
+            <div class="name">{{ scan.name }}</div>
 
             <div class="meta">
               {{ formatSource(scan.sourceType) }} • {{ formatDate(scan.createdAt) }}
             </div>
 
-            <!-- 🔥 LIVE STATUS -->
             <div v-if="scan.status === 'running'" class="live">
               Running
             </div>
@@ -143,7 +151,6 @@ const statusColor = (status: ScanStatus) => {
     case 'completed': return 'success'
     case 'queued': return 'warning'
     case 'failed': return 'danger'
-    default: return 'secondary'
   }
 }
 
@@ -182,6 +189,12 @@ const formatDate = (ts: number) => {
   align-items: center;
 }
 
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
 .actions {
   display: flex;
   gap: 12px;
@@ -193,10 +206,9 @@ const formatDate = (ts: number) => {
   gap: 6px;
 }
 
-.title {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--va-text-primary);
+.filters .active {
+  background: var(--va-primary);
+  color: white;
 }
 
 .state {
@@ -221,61 +233,31 @@ const formatDate = (ts: number) => {
   flex-direction: column;
   gap: var(--va-gap-medium);
   cursor: pointer;
-  transition: 0.2s;
-  user-select: none;
+  border: 1px solid var(--va-background-border);
+  background: var(--va-background-element);
+  border-radius: 14px;
+  transition: 0.2s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  background: var(--va-background-secondary);
+  border-color: var(--va-primary);
 }
 
 .running {
-  border-left: 3px solid var(--va-primary);
-  animation: pulse 1.6s infinite;
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.85; }
-  50% { opacity: 1; }
-  100% { opacity: 0.85; }
-}
-
-
-.running::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 120%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.06),
-    transparent
-  );
-  animation: shine 2.2s infinite;
-}
-
-@keyframes shine {
-  0% { left: -150%; }
-  100% { left: 150%; }
+  border-color: var(--va-primary);
+  box-shadow: 0 0 0 2px rgba(0, 120, 255, 0.1);
 }
 
 .top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--va-gap-medium);
 }
 
 .name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--va-text-primary);
 }
 
 .meta {
@@ -332,6 +314,10 @@ const formatDate = (ts: number) => {
   color: var(--va-text-secondary);
   min-width: 40px;
   text-align: right;
+}
+
+.skeleton {
+  opacity: 0.7;
 }
 
 .mt {

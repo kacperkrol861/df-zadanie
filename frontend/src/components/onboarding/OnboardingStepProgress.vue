@@ -218,7 +218,7 @@ const formatStep = (s: string) => {
   color: white;
 }
 
-.step.done .dot {
+.step.done .dot { 
   background: var(--va-success);
   color: white;
 }

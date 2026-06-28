@@ -1,11 +1,6 @@
 export type SourceType = 'cloud' | 'db' | 'api'
 
-export type ScanStatus =
-  | 'idle'
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
+export type ScanStatus = 'queued' | 'running' | 'completed' | 'failed'
 
 export interface KPI {
   label: string
@@ -55,7 +50,7 @@ export const useMockApi = () => {
 
   const connectSource = async (type: SourceType) => {
     await delay(1200)
-    await delay(800)
+    await delay(900)
 
     const ok = Math.random() > 0.2
 
@@ -63,6 +58,40 @@ export const useMockApi = () => {
       status: ok ? 'connected' : 'error',
       type,
     }
+  }
+
+  
+  const runScan = async (onProgress: (v: number) => void) => {
+    let progress = 0
+
+    const steps = [
+      'Initializing scan engine...',
+      'Connecting to source...',
+      'Loading schema...',
+      'Indexing data...',
+      'Running anomaly detection...',
+      'Validating results...',
+      'Finalizing report...',
+    ]
+
+    for (const step of steps) {
+      await delay(300)
+
+      progress += Math.floor(Math.random() * 15) + 5
+      if (progress > 100) progress = 100
+
+      onProgress(progress)
+    }
+
+    while (progress < 100) {
+      await delay(120)
+      progress += 7
+      if (progress > 100) progress = 100
+
+      onProgress(progress)
+    }
+
+    return { status: 'completed' as const }
   }
 
   const fetchScans = async (): Promise<ScanItem[]> => {
@@ -82,8 +111,8 @@ export const useMockApi = () => {
         name: 'CRM database scan',
         sourceType: 'db',
         status: 'running',
-        progress: 62,
-        createdAt: Date.now() - 1000 * 60 * 30,
+        progress: 66,
+        createdAt: Date.now() - 1000 * 60 * 25,
       },
       {
         id: 'scan_3',
@@ -97,87 +126,142 @@ export const useMockApi = () => {
   }
 
   const fetchScanById = async (id: string): Promise<ScanItem> => {
-    await delay(600)
+    await delay(500)
 
-    return {
-      id,
-      name: 'Finance dataset scan',
-      sourceType: 'cloud',
-      status: 'running',
-      progress: 68,
-      createdAt: Date.now() - 1000 * 60 * 40,
+    const map: Record<string, ScanItem> = {
+      scan_1: {
+        id,
+        name: 'Finance dataset scan',
+        sourceType: 'cloud',
+        status: 'completed',
+        progress: 100,
+        createdAt: Date.now() - 1000 * 60 * 60 * 6,
+      },
+
+      scan_2: {
+        id,
+        name: 'CRM database scan',
+        sourceType: 'db',
+        status: 'running',
+        progress: 68,
+        createdAt: Date.now() - 1000 * 60 * 40,
+      },
+
+      scan_3: {
+        id,
+        name: 'API ingestion scan',
+        sourceType: 'api',
+        status: 'queued',
+        progress: 0,
+        createdAt: Date.now() - 1000 * 60 * 15,
+      },
     }
+
+    return map[id] ?? map.scan_1
   }
 
-  const createScan = async (input: {
-    name: string
-    sourceType: SourceType
-  }): Promise<ScanItem> => {
+  const createScan = async (input: { name: string; sourceType: SourceType }) => {
     await delay(700)
 
     return {
       id: crypto.randomUUID(),
       name: input.name,
       sourceType: input.sourceType,
-      status: 'queued',
+      status: 'queued' as ScanStatus,
       progress: 0,
       createdAt: Date.now(),
     }
   }
 
   const deleteScan = async (id: string) => {
-    await delay(400)
+    await delay(500)
     return { success: true, id }
   }
 
-  const runScan = async (onProgress: (v: number) => void) => {
-    let progress = 0
-
-    while (progress < 100) {
-      await delay(200)
-      progress += Math.floor(Math.random() * 12)
-      if (progress > 100) progress = 100
-      onProgress(progress)
-    }
-
-    return { status: 'completed' as const }
-  }
 
   const fetchScanLogs = async (scanId: string): Promise<ScanLog[]> => {
-    await delay(900)
+    await delay(600)
 
-    return [
-      {
-        id: 'l1',
-        scanId,
-        message: 'Initializing scan engine...',
-        timestamp: Date.now() - 1000 * 60 * 5,
-      },
-      {
-        id: 'l2',
-        scanId,
-        message: 'Fetching source metadata...',
-        timestamp: Date.now() - 1000 * 60 * 4,
-      },
-      {
-        id: 'l3',
-        scanId,
-        message: 'Processing records...',
-        timestamp: Date.now() - 1000 * 60 * 2,
-      },
-    ]
+    const base: Record<string, ScanLog[]> = {
+      scan_1: [
+        {
+          id: 'l1',
+          scanId,
+          message: 'Scan completed successfully',
+          timestamp: Date.now() - 1000 * 60 * 60,
+        },
+        {
+          id: 'l2',
+          scanId,
+          message: 'All validations passed',
+          timestamp: Date.now() - 1000 * 60 * 90,
+        },
+      ],
+
+      scan_2: [
+        {
+          id: 'l3',
+          scanId,
+          message: 'Connecting to source...',
+          timestamp: Date.now() - 1000 * 60 * 5,
+        },
+        {
+          id: 'l4',
+          scanId,
+          message: 'Indexing data...',
+          timestamp: Date.now() - 1000 * 60 * 3,
+        },
+        {
+          id: 'l5',
+          scanId,
+          message: 'Running anomaly detection...',
+          timestamp: Date.now() - 1000 * 60 * 1,
+        },
+      ],
+
+      scan_3: [
+        {
+          id: 'l6',
+          scanId,
+          message: 'Scan queued in job system',
+          timestamp: Date.now() - 1000 * 60 * 2,
+        },
+      ],
+    }
+
+    return base[scanId] ?? []
   }
 
-  const fetchScanResults = async (
-    scanId: string
-  ): Promise<ScanResultItem[]> => {
-    await delay(1000)
+
+  const fetchScanResults = async (scanId: string): Promise<ScanResultItem[]> => {
+    await delay(800)
+
+    const base: Record<string, ScanResultItem[]> = {
+      scan_1: [
+        { id: 'r1', scanId, category: 'Revenue anomalies', value: 14 },
+        { id: 'r2', scanId, category: 'Duplicates', value: 6 },
+        { id: 'r3', scanId, category: 'Schema drift', value: 3 },
+        { id: 'r4', scanId, category: 'Missing records', value: 8 },
+      ],
+
+      scan_2: [
+        { id: 'r5', scanId, category: 'Latency spikes', value: 9 },
+        { id: 'r6', scanId, category: 'Partial joins', value: 5 },
+      ],
+
+      scan_3: [],
+    }
+
+    return base[scanId] ?? []
+  }
+
+
+  const fetchRunningPreview = async (scanId: string): Promise<ScanResultItem[]> => {
+    await delay(300)
 
     return [
-      { id: 'r1', scanId, category: 'Revenue anomalies', value: 12 },
-      { id: 'r2', scanId, category: 'Missing records', value: 4 },
-      { id: 'r3', scanId, category: 'Duplicates', value: 9 },
-      { id: 'r4', scanId, category: 'Schema drift', value: 2 },
+      { id: 'p1', scanId, category: 'Early anomalies', value: 4 },
+      { id: 'p2', scanId, category: 'Schema warnings', value: 2 },
     ]
   }
 
@@ -191,9 +275,7 @@ export const useMockApi = () => {
         { label: 'Sources', value: 4 },
       ],
       activity: [],
-      chart: Array.from({ length: 12 }, () =>
-        Math.floor(Math.random() * 100)
-      ),
+      chart: Array.from({ length: 12 }, () => Math.floor(Math.random() * 100)),
     }
   }
 
@@ -209,34 +291,21 @@ export const useMockApi = () => {
       },
       {
         id: crypto.randomUUID(),
-        title: 'Scan “Finance dataset” completed',
+        title: 'Scan completed',
         type: 'scan_completed',
         timestamp: Date.now() - 1000 * 60 * 18,
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Report generated',
-        type: 'report_generated',
-        timestamp: Date.now() - 1000 * 60 * 42,
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'New scan started',
-        type: 'scan_started',
-        timestamp: Date.now() - 1000 * 60 * 70,
       },
     ]
   }
 
   return {
     connectSource,
+    runScan,
     fetchScans,
     fetchScanById,
-    createScan,
-    deleteScan,
-    runScan,
     fetchScanLogs,
     fetchScanResults,
+    fetchRunningPreview,
     fetchDashboard,
     fetchRecentActivity,
   }
