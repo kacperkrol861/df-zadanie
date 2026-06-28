@@ -8,6 +8,7 @@ import DashboardView from '@/views/DashboardView.vue'
 import ScansView from '@/views/ScansView.vue'
 import ScanDetail from '@/views/ScanDetail.vue'
 import ReportsView from '@/views/ReportsView.vue'
+import ReportDetail from '@/views/ReportsDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -39,6 +40,10 @@ const router = createRouter({
         {
           path: 'reports',
           component: ReportsView,
+        },
+        {
+          path: 'reports/:id',
+          component: ReportDetail,
         },
       ],
     },

@@ -2,6 +2,8 @@ export type SourceType = 'cloud' | 'db' | 'api'
 
 export type ScanStatus = 'queued' | 'running' | 'completed' | 'failed'
 
+export type ReportStatus = 'draft' | 'generating' | 'ready' | 'failed'
+
 export interface KPI {
   label: string
   value: number | string
@@ -44,9 +46,61 @@ export interface DashboardData {
   chart: number[]
 }
 
+export interface ReportItem {
+  id: string
+  title: string
+  scanId: string
+  source: SourceType
+  status: ReportStatus
+  createdAt: number
+  summary: string
+  sections: {
+    id: string
+    title: string
+    content: string
+  }[]
+}
+
 export const useMockApi = () => {
   const delay = (ms: number) =>
     new Promise(resolve => setTimeout(resolve, ms))
+
+  const randomFail = () => Math.random() < 0.2
+
+  
+  const reportsDb: ReportItem[] = [
+    {
+      id: 'rep_1',
+      title: 'Finance scan report',
+      scanId: 'scan_1',
+      source: 'cloud',
+      status: 'ready',
+      createdAt: Date.now() - 1000 * 60 * 60 * 24,
+      summary: 'Summary of financial anomalies detected in dataset.',
+      sections: [
+        {
+          id: 's1',
+          title: 'Overview',
+          content: 'The scan identified multiple inconsistencies in revenue records.',
+        },
+        {
+          id: 's2',
+          title: 'Key Findings',
+          content: 'Duplicates and missing records were the most common issues.',
+        },
+      ],
+    },
+    {
+      id: 'rep_2',
+      title: 'CRM quality report',
+      scanId: 'scan_2',
+      source: 'db',
+      status: 'generating',
+      createdAt: Date.now() - 1000 * 60 * 40,
+      summary: 'Report is being generated from live scan data.',
+      sections: [],
+    },
+  ]
 
   const connectSource = async (type: SourceType) => {
     await delay(1200)
@@ -60,7 +114,6 @@ export const useMockApi = () => {
     }
   }
 
-  
   const runScan = async (onProgress: (v: number) => void) => {
     let progress = 0
 
@@ -178,7 +231,7 @@ export const useMockApi = () => {
     return { success: true, id }
   }
 
-
+  
   const fetchScanLogs = async (scanId: string): Promise<ScanLog[]> => {
     await delay(600)
 
@@ -232,7 +285,7 @@ export const useMockApi = () => {
     return base[scanId] ?? []
   }
 
-
+  
   const fetchScanResults = async (scanId: string): Promise<ScanResultItem[]> => {
     await delay(800)
 
@@ -255,7 +308,7 @@ export const useMockApi = () => {
     return base[scanId] ?? []
   }
 
-
+ 
   const fetchRunningPreview = async (scanId: string): Promise<ScanResultItem[]> => {
     await delay(300)
 
@@ -298,6 +351,67 @@ export const useMockApi = () => {
     ]
   }
 
+  
+  const fetchReports = async (): Promise<ReportItem[]> => {
+    await delay(800)
+    return [...reportsDb]
+  }
+
+  const fetchReportById = async (id: string): Promise<ReportItem> => {
+    await delay(500)
+    return reportsDb.find(r => r.id === id) ?? reportsDb[0]
+  }
+
+  const generateReport = async (scanId: string): Promise<ReportItem> => {
+    await delay(400)
+
+    const newReport: ReportItem = {
+      id: crypto.randomUUID(),
+      title: `Report for ${scanId}`,
+      scanId,
+      source: 'cloud',
+      status: 'generating',
+      createdAt: Date.now(),
+      summary: 'Report generation started...',
+      sections: [],
+    }
+
+    reportsDb.unshift(newReport)
+
+    setTimeout(() => {
+      const report = reportsDb.find(r => r.id === newReport.id)
+      if (!report) return
+
+      if (randomFail()) {
+        report.status = 'failed'
+        report.summary = 'Report generation failed due to processing error.'
+        return
+      }
+
+      report.status = 'ready'
+      report.summary = `Report for ${scanId} successfully generated.`
+      report.sections = [
+        {
+          id: crypto.randomUUID(),
+          title: 'Overview',
+          content: 'Scan completed with high confidence scoring.',
+        },
+        {
+          id: crypto.randomUUID(),
+          title: 'Anomalies',
+          content: 'Detected 3% irregular patterns in dataset.',
+        },
+        {
+          id: crypto.randomUUID(),
+          title: 'Recommendation',
+          content: 'Data cleanup recommended before next pipeline run.',
+        },
+      ]
+    }, 2500 + Math.random() * 2000)
+
+    return newReport
+  }
+
   return {
     connectSource,
     runScan,
@@ -308,5 +422,8 @@ export const useMockApi = () => {
     fetchRunningPreview,
     fetchDashboard,
     fetchRecentActivity,
+    fetchReports,
+    fetchReportById,
+    generateReport,
   }
 }
