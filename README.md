@@ -1,6 +1,6 @@
 # DataFlow
 
-## 🚀 Stack
+##  Stack
 
 - Vue 3 (Composition API)
 - TypeScript
@@ -11,7 +11,7 @@
 
 ---
 
-## ▶️ Uruchomienie projektu
+##  Uruchomienie projektu
 
 ```bash
 npm install
@@ -26,7 +26,7 @@ http://localhost:5173
 
 ---
 
-## 📌 Opis projektu
+##  Opis projektu
 
 Aplikacja symuluje system do uruchamiania skanów danych, generowania raportów oraz przeglądania wyników analitycznych.
 
@@ -34,7 +34,7 @@ Głównym celem było zaprojektowanie intuicyjnego przepływu onboardingowego or
 
 ---
 
-## 🧭 Decyzje projektowe
+##  Decyzje projektowe
 
 Największy nacisk położyłem na onboarding, ponieważ to on prowadzi użytkownika do pierwszego realnego efektu w systemie.
 
@@ -67,7 +67,7 @@ Największy nacisk położyłem na onboarding, ponieważ to on prowadzi użytkow
 
 ---
 
-## 🎨 Identyfikacja wizualna
+##  Identyfikacja wizualna
 
 Interfejs opiera się na:
 
@@ -78,7 +78,7 @@ Interfejs opiera się na:
 
 ---
 
-## ⚖️ Świadome kompromisy
+##  Świadome kompromisy
 
 - Brak backendu → całość oparta o mock API  
 - Symulacja procesów zamiast realnych jobów  
@@ -87,7 +87,7 @@ Interfejs opiera się na:
 
 ---
 
-## 🔮 Co bym dodał mając więcej czasu
+##  Co bym dodał mając więcej czasu
 
 - Poprawiłbym sekcję raportów, aby działała w pełni w trybie “live” (automatyczne odświeżanie statusów bez ręcznego refreshu)  
 - Dodałbym bardziej szczegółowy widok raportu z lepszą strukturą sekcji (np. podział na metryki, wykresy i rekomendacje zamiast tylko tekstu)  
