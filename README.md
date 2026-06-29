@@ -93,8 +93,7 @@ Interfejs opiera się na:
 
 ##  Co bym dodał mając więcej czasu
 
-- Poprawiłbym sekcję raportów, aby działała w pełni w trybie “live” (automatyczne odświeżanie statusów bez ręcznego refreshu)  
-- Dodałbym bardziej szczegółowy widok raportu z lepszą strukturą sekcji (np. podział na metryki, wykresy i rekomendacje zamiast tylko tekstu)  
+- Poprawiłbym sekcję raportów, aby działała w pełni w trybie “live” (automatyczne odświeżanie statusów bez ręcznego refreshu)   
 - Rozbudowałbym system statusów raportów o dodatkowe etapy (np. processing / finalizing), aby lepiej oddać realny proces generowania  
 - Dodałbym lepsze wizualne feedbacki dla zmian statusów (animacje, highlight zmian, loader w kartach)  
 ```
